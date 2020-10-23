@@ -1,0 +1,44 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+#editor-area{
+  width: 1280px;
+  height: 720px;
+  background-color: #e8eaf6;
+}
+.gridCell{
+  border: 1px solid #c5cae9;
+  border-width: 0 1px 1px 0;
+  float: left;
+}
+.draggable{
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: move;
+  width: 200px;
+  height: 50px;
+  user-select: none;
+  text-align: center;
+  line-height: 50px;
+  font-size: 1.25em;
+  border: 1px solid #9fa8da;
+  color: #7986cb;
+}
+#addButton{
+  border-radius: 50% 0 0 50%;
+  background-color: #673ab7;
+  color: #ffffff;
+  width: 50px;
+  height: 50px;
+  line-height: 44px;
+  font-size: 2.5em;
+  position: absolute;
+  right: 0;
+  top: 50vh;
+  text-align: center;
+  cursor: pointer;
+}
