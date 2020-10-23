@@ -9,10 +9,15 @@ const editorAreaWidth = editorArea.clientWidth;
 const editorAreaHeight = editorArea.clientHeight;
 const cellWidth = editorAreaWidth / cellCountX;
 const cellHeight = editorAreaHeight / cellCountY;
+const siteState = JSON.parse(localStorage.getItem('state'));
 
 createGrid();
 renderInitialState();
 registerInitialListeners();
+
+if(siteState){
+  siteState.forEach(state => makeResizableDiv(`#${state.id}`))
+}
 
 function moveAt(element, pageX, shiftX, pageY, shiftY) {
   let coordinateX = parseInt((pageX - shiftX) / cellWidth);
@@ -58,7 +63,6 @@ function registerListener(draggable){
       }
   
       const removeListeners = () => {
-        console.log(droppedPosition);
         const state = localStorage.getItem('state');
         let newState = [];
         if(state){
@@ -101,9 +105,23 @@ function createElement() {
   let draggableElement = document.createElement('div');
   draggableElement.classList.add('draggable');
   draggableElement.id = `draggable-${nextId}`;
-  draggableElement.innerText = 'Test123';
+  draggableElement.style.left = '0px';
+  draggableElement.style.top = '0px';
+  draggableElement.style.width = 20 * cellWidth + 'px';
+  draggableElement.style.height = 5 * cellHeight + 'px';
+  let resizerBottomRight = document.createElement('div');
+  resizerBottomRight.classList.add('resizer','bottom-right');
+  let textSpan = document.createElement('span');
+  textSpan.classList.add('text');
+  textSpan.innerText = 'Test 123';
+  let resizers = document.createElement('div');
+  resizers.classList.add('resizers');
+  resizers.appendChild(textSpan);
+  resizers.appendChild(resizerBottomRight);
+  draggableElement.appendChild(resizers);
   document.body.appendChild(draggableElement);
   registerListener(draggableElement);
+  makeResizableDiv(`#${draggableElement.id}`);
   localStorage.setItem('currentId', nextId);
 }
 
@@ -127,10 +145,97 @@ function renderInitialState(){
       let draggableElement = document.createElement('div');
       draggableElement.classList.add('draggable');
       draggableElement.id = element.id;
-      draggableElement.innerText = element.text;
       draggableElement.style.left = element.x * cellWidth + 'px';
       draggableElement.style.top = element.y * cellHeight + 'px';
+      if (element.width) {
+        draggableElement.style.width = element.width * cellWidth + 'px';
+      } else {
+        draggableElement.style.width = 20 * cellWidth + 'px';
+      }
+
+      if (element.height) {
+        draggableElement.style.height = element.height * cellHeight + 'px';
+      } else {
+        draggableElement.style.height = 5 * cellHeight + 'px';
+      }
+      
+      let resizerBottomRight = document.createElement('div');
+      resizerBottomRight.classList.add('resizer','bottom-right');
+      let textSpan = document.createElement('span');
+      textSpan.innerText = element.text;
+      textSpan.classList.add('text');
+      let resizers = document.createElement('div');
+      resizers.classList.add('resizers');
+      resizers.appendChild(textSpan);
+      resizers.appendChild(resizerBottomRight);
+      draggableElement.appendChild(resizers);
       document.body.appendChild(draggableElement);
     });
+  }
+}
+
+
+
+function makeResizableDiv(div) {
+  const resizable = document.querySelector(div);
+  const resizer = document.querySelector(`${div} .resizer`)
+
+  const minimum_size = cellWidth * 3;
+  let original_width = 0;
+  let original_height = 0;
+  let original_x = 0;
+  let original_y = 0;
+  let original_mouse_x = 0;
+  let original_mouse_y = 0;
+  
+  resizer.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    original_width = parseFloat(getComputedStyle(resizable, null).getPropertyValue('width').replace('px', ''));
+    original_height = parseFloat(getComputedStyle(resizable, null).getPropertyValue('height').replace('px', ''));
+    original_x = resizable.getBoundingClientRect().left;
+    original_y = resizable.getBoundingClientRect().top;
+    original_mouse_x = e.pageX;
+    original_mouse_y = e.pageY;
+    window.addEventListener('mousemove', resize)
+    window.addEventListener('mouseup', stopResize)
+  })
+  
+  function resize(e) {
+    if (resizer.classList.contains('bottom-right')) {
+      let width = original_width + (e.pageX - original_mouse_x);
+      if(width % cellWidth !== 0) {
+        width = width - (width % cellWidth);
+      }
+      let height = original_height + (e.pageY - original_mouse_y);
+      if(height % cellHeight !== 0) {
+        height = height - (height % cellHeight);
+      }
+      if (width > minimum_size) {
+        resizable.style.width = width + 'px'
+      }
+      if (height > minimum_size) {
+        resizable.style.height = height + 'px'
+      }
+    }
+  }
+  
+  function stopResize() {
+    const state = localStorage.getItem('state');
+    let newState = [];
+    if(state){
+      newState = JSON.parse(state);
+      let replacedElement = false;
+      newState.map(element => {
+        if(element.id === resizable.id) {
+          console.log(element.id);
+          element.width = parseInt(resizable.style.width.replace('px', '')) / cellWidth;
+          element.height = parseInt(resizable.style.height.replace('px', '')) / cellHeight;
+          replacedElement = true;
+        }
+      });
+      localStorage.setItem('state', JSON.stringify(newState));
+    }
+    window.removeEventListener('mousemove', resize)
   }
 }
